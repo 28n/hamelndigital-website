@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# hamelndigital — Website
 
-## Getting Started
+Corporate website for **hamelndigital GmbH**, a digital engineering company
+from Hameln, Germany. Built with Next.js (App Router), TypeScript, Tailwind
+CSS and Bun.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router, Cache Components, standalone output)
+- React 19 + TypeScript (strict)
+- Tailwind CSS 4 (CSS-first theme in `src/app/globals.css`)
+- Geist / Geist Mono via `next/font` (self-hosted, no external requests)
+- `nodemailer` for the contact form
+- No analytics, no cookies, no third-party assets
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+bun dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Checks:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+bun run lint   # ESLint
+bun run build  # production build (typecheck + prerender)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Configuration
 
-## Learn More
+Copy `.env.example` to `.env` and fill in the values. Summary:
 
-To learn more about Next.js, take a look at the following resources:
+| Variable            | Purpose                                             |
+| ------------------- | --------------------------------------------------- |
+| `SITE_URL`          | Public base URL — **build-time**, feeds metadata, sitemap, canonicals |
+| `CONTACT_EMAIL`     | Public contact address shown on the site            |
+| `SMTP_*`            | Contact form delivery (host, port, user, pass)      |
+| `SMTP_FROM`         | Optional From header for contact mails              |
+| `CONTACT_TO`        | Inbox for contact requests (defaults to `CONTACT_EMAIL`) |
+| `FORM_TOKEN_SECRET` | Anti-spam token secret (random per process if unset)|
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+If `SMTP_HOST` is not configured, the contact form degrades gracefully: it
+validates input and then tells visitors to write to `CONTACT_EMAIL` directly.
+Nothing is silently discarded.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment (Docker)
 
-## Deploy on Vercel
+The app builds to a standalone Node server — it does **not** manage TLS.
+Run it behind your existing reverse proxy (Traefik, nginx, Caddy …) and
+forward to `127.0.0.1:3000`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+cp .env.example .env   # fill in values
+docker compose up -d --build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Traefik labels are included as comments in `docker-compose.yml`.
+
+## Before going live — required input
+
+The following real business information is intentionally marked as
+`[placeholders]` or must be verified:
+
+- **Impressum** (`/impressum`): street address, managing director(s),
+  commercial register + HRB number, VAT ID (if applicable), phone number,
+  person responsible per § 18 Abs. 2 MStV.
+- **Datenschutz** (`/datenschutz`): hosting provider and log retention,
+  responsible supervisory authority, last-updated date. Have the page
+  reviewed before launch — it is a tailored description of the actual
+  implementation, not a legal certificate.
+- `SITE_URL` and `CONTACT_EMAIL`: verify the real domain and mailbox.
+- Contact form SMTP credentials.
+
+## Structure
+
+```
+src/
+  app/            routes: /, /leistungen, /unternehmen, /kontakt,
+                  /impressum, /datenschutz (+ sitemap, robots, icons)
+  components/     header, footer, container, buttons, contact form
+  lib/            site config, mail delivery, anti-spam token
+```

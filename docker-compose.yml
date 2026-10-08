@@ -1,0 +1,39 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        # Public base URL — baked into prerendered metadata, sitemap and
+        # canonical URLs. Set it per environment in .env or the shell.
+        SITE_URL: ${SITE_URL:-https://hamelndigital.de}
+    image: hamelndigital-website
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      # Publish on localhost only; the reverse proxy in front of this host
+      # terminates TLS and forwards to http://127.0.0.1:3000.
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:3000/",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # Example labels for Traefik (uncomment and adapt if you use Traefik):
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.hamelndigital.rule=Host(`hamelndigital.de`)"
+    #   - "traefik.http.routers.hamelndigital.entrypoints=websecure"
+    #   - "traefik.http.routers.hamelndigital.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.hamelndigital.loadbalancer.server.port=3000"

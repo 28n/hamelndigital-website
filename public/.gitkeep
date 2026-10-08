@@ -1,0 +1,2 @@
+Static assets served at the site root go here. Kept in git so the
+`COPY /app/public` step in the Dockerfile always has a source directory.
