@@ -44,18 +44,27 @@ If `SMTP_HOST` is not configured, the contact form degrades gracefully: it
 validates input and then tells visitors to write to `CONTACT_EMAIL` directly.
 Nothing is silently discarded.
 
-## Deployment (Docker)
+## Deployment (Docker + Traefik)
 
 The app builds to a standalone Node server — it does **not** manage TLS.
-Run it behind your existing reverse proxy (Traefik, nginx, Caddy …) and
-forward to `127.0.0.1:3000`.
+`docker-compose.yml` ships with Traefik labels: a `websecure` router for
+the apex domain, a `www.` → apex redirect, and certificate provisioning
+through your existing cert resolver.
+
+Prerequisite: the shared external network must exist (it usually does on
+hosts already running Traefik):
 
 ```bash
-cp .env.example .env   # fill in values
+docker network create traefik   # skip if it already exists
+cp .env.example .env            # fill in values
 docker compose up -d --build
 ```
 
-Traefik labels are included as comments in `docker-compose.yml`.
+Adjust `SITE_DOMAIN`, `TRAEFIK_NETWORK`, `TRAEFIK_ENTRYPOINT` and
+`TRAEFIK_CERTRESOLVER` in `.env` to match your Traefik installation.
+
+Without Traefik, any reverse proxy can forward to `127.0.0.1:3000` —
+remove the labels and the `traefik` network attachment in that case.
 
 ## Before going live — required input
 

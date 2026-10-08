@@ -12,9 +12,12 @@ services:
       - path: .env
         required: false
     ports:
-      # Publish on localhost only; the reverse proxy in front of this host
-      # terminates TLS and forwards to http://127.0.0.1:3000.
+      # Loopback-only publish for direct access/debugging. Traefik routes
+      # over the shared docker network, so this is not required for
+      # production traffic.
       - "127.0.0.1:3000:3000"
+    networks:
+      - traefik
     healthcheck:
       test:
         [
@@ -29,11 +32,23 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik}"
+      - "traefik.http.routers.hamelndigital.rule=Host(`${SITE_DOMAIN:-hamelndigital.de}`)"
+      - "traefik.http.routers.hamelndigital.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.hamelndigital.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.services.hamelndigital.loadbalancer.server.port=3000"
+      # Redirect www -> apex. Remove if not needed.
+      - "traefik.http.routers.hamelndigital-www.rule=Host(`www.${SITE_DOMAIN:-hamelndigital.de}`)"
+      - "traefik.http.routers.hamelndigital-www.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.hamelndigital-www.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.hamelndigital-www.middlewares=hamelndigital-www-redirect"
+      - "traefik.http.middlewares.hamelndigital-www-redirect.redirectregex.regex=^https?://www\\.${SITE_DOMAIN:-hamelndigital.de}/(.*)"
+      - "traefik.http.middlewares.hamelndigital-www-redirect.redirectregex.replacement=https://${SITE_DOMAIN:-hamelndigital.de}/$${1}"
+      - "traefik.http.middlewares.hamelndigital-www-redirect.redirectregex.permanent=true"
 
-    # Example labels for Traefik (uncomment and adapt if you use Traefik):
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.hamelndigital.rule=Host(`hamelndigital.de`)"
-    #   - "traefik.http.routers.hamelndigital.entrypoints=websecure"
-    #   - "traefik.http.routers.hamelndigital.tls.certresolver=letsencrypt"
-    #   - "traefik.http.services.hamelndigital.loadbalancer.server.port=3000"
+networks:
+  traefik:
+    name: ${TRAEFIK_NETWORK:-traefik}
+    external: true
