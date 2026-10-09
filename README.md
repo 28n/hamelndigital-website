@@ -55,8 +55,8 @@ Prerequisite: the shared external network must exist (it usually does on
 hosts already running Traefik):
 
 ```bash
-docker network create traefik   # skip if it already exists
-cp .env.example .env            # fill in values
+docker network create eucent-edge   # skip if it already exists
+cp .env.example .env                # fill in values
 docker compose up -d --build
 ```
 
@@ -64,7 +64,7 @@ Adjust `SITE_DOMAIN`, `TRAEFIK_NETWORK`, `TRAEFIK_ENTRYPOINT` and
 `TRAEFIK_CERTRESOLVER` in `.env` to match your Traefik installation.
 
 Without Traefik, any reverse proxy can forward to `127.0.0.1:3000` —
-remove the labels and the `traefik` network attachment in that case.
+remove the labels and the `edge` network attachment in that case.
 
 ## Before going live — required input
 

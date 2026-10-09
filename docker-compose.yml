@@ -17,7 +17,7 @@ services:
       # production traffic.
       - "127.0.0.1:3000:3000"
     networks:
-      - traefik
+      - edge
     healthcheck:
       test:
         [
@@ -34,7 +34,7 @@ services:
       start_period: 10s
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik}"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-eucent-edge}"
       - "traefik.http.routers.hamelndigital.rule=Host(`${SITE_DOMAIN:-hamelndigital.de}`)"
       - "traefik.http.routers.hamelndigital.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.hamelndigital.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
@@ -49,6 +49,6 @@ services:
       - "traefik.http.middlewares.hamelndigital-www-redirect.redirectregex.permanent=true"
 
 networks:
-  traefik:
-    name: ${TRAEFIK_NETWORK:-traefik}
+  edge:
+    name: ${TRAEFIK_NETWORK:-eucent-edge}
     external: true
